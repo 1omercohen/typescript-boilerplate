@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tasks {
+  id        String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name      String     @db.VarChar
+  created   DateTime   @default(now()) @db.Timestamp(6)
+  completed DateTime?  @db.Timestamp(6)
+  priority  String     @default("medium") @db.VarChar
+  missions  missions[]
+}
+
+model users {
+  id                                 String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  first_name                         String     @db.VarChar
+  last_name                          String     @db.VarChar
+  created                            DateTime   @default(now()) @db.Timestamp(6)
+  email                              String     @db.VarChar
+  password                           String
+  missions_missions_assign_toTousers missions[] @relation("missions_assign_toTousers")
+  missions_missions_user_idTousers   missions[] @relation("missions_user_idTousers")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model missions {
+  user_id                         String  @db.Uuid
+  task_id                         String  @db.Uuid
+  assign_to                       String? @db.Uuid
+  state                           String  @default("todo") @db.VarChar
+  users_missions_assign_toTousers users?  @relation("missions_assign_toTousers", fields: [assign_to], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tasks                           tasks   @relation(fields: [task_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_missions_user_idTousers   users   @relation("missions_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([user_id, task_id])
+}
+
+enum pogress {
+  todo
+  in_progress
+  done
+}
+
+enum levels {
+  low
+  middle
+  high
+}
